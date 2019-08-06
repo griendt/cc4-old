@@ -1,0 +1,87 @@
+.field {
+    border-collapse: separate;
+    float: left;
+}
+
+td {
+    text-align: center;
+    height: 32px;
+    width: 32px;
+    color: #333;
+    background-color: #fff;
+    font: 10px Rubik;
+    font-weight: bold;
+
+    box-shadow: inset 0px 0px 2px 2px rgba(0,0,0,.05);
+    border: 1px solid #ddd;
+    transition: all 0.3s linear;
+}
+
+.entry--1 {
+    background-color: rgba(30, 30, 30, 1);
+    border: 1px solid rgba(0, 0, 0, 1);
+    color: #ddd;
+}
+
+.entry-1 {
+    background-color: rgba(242, 115, 115, 1);
+    border: 1px solid rgba(200, 0, 0, 1);
+}
+
+.entry-2 {
+    background-color: rgba(115, 115, 242, 1);
+    border: 1px solid rgba(0, 0, 200, 1);
+}
+
+.entry-3 {
+    background-color: rgba(242, 242, 115, 1);
+    border: 1px solid rgba(200, 200, 0, 1);
+}
+
+.entry-4 {
+    background-color: rgba(115, 242, 115, 1);
+    border: 1px solid rgba(0, 200, 0, 1);
+}
+
+.entry-feasible {
+    background-color: #fff;
+    box-shadow: inset 0px 0px 2px 2px rgba(255,255,255,.2);
+    border-color: #888;
+}
+
+.player-1 {
+    color: rgb(200,0,0);
+    font-weight: bold;
+    background: rgba(240,0,0,.2);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(240,0,0,0.5);
+    text-align: center;
+}
+.player-2 {
+    color: rgb(0,0,200);
+    font-weight: bold;
+    background: rgba(0,0,240,.2);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,240,0.5);
+    text-align: center;
+}
+.player-3 {
+    color: rgb(200,200,0);
+    font-weight: bold;
+    background: rgba(240,240,0,.2);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(240,240,0,0.5);
+    text-align: center;
+}
+.player-4 {
+    color: rgb(0,200,0);
+    font-weight: bold;
+    background: rgba(0,240,0,.2);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,240,0,0.5);
+    text-align: center;
+}

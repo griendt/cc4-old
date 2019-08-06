@@ -1,0 +1,221 @@
+{% extends "layout.html" %}
+
+{% block title %}Centrifugaal Vier-op-een-rij{% endblock %}
+
+{% block body %}
+
+<!-- 
+<div class="row">
+  <form class="form" id="chat-form">
+    <div class="form-group">
+      <label for="name"><i class="fas fa-fw fa-user"></i> Name</label>
+        <input id="name" class="form-control" placeholder="">
+    </div>
+    <div class="form-group">
+        <label for="message"><i class="fas fa-fw fa-edit"></i> Message</label>
+        <input id="message" class="form-control" placeholder="">
+    </div>
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit" name="action">
+            Send <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+  </form>
+</div>
+
+Chat list 
+<ul
+    id="chat-list"
+    class="list-group list-group-flush"
+    style="padding-top: 20px">
+    {% for chat in chats %}
+    <li
+        class="list-group-item"
+        id="{{chat.id}}">
+        {{ chat.name }} - {{ chat.message }}
+    </li>
+    {% endfor %}
+</ul>
+-->
+
+<!-- Table -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-8">
+            <table class="field" style="border: 3px solid #ddd; border-radius: 2px;">
+                {% for n in range(17) %}
+                    <tr>
+                    {% for m in range(17) %}
+                        <td
+                            class="entry-{{ game['field'][n][m] }}" id="block-{{ 17*n+m }}"></td>
+                    {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-header">
+                    Game
+                </div>
+                <div class="card-body">
+                    <h6>Player to move</h6>
+                    <p id="player-to-move" class="player-{{ game['player_to_move']}}">Player {{ game['player_to_move'] }}</p>
+                    <h6>Reset game state</h6>
+                    <button type="button" class="btn btn-danger" onclick="reset()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.8.1/axios.min.js"></script>
+<script>
+
+var chatForm = document.getElementById('chat-form');
+var nameInput = document.getElementById('name');
+var messageInput = document.getElementById('message');
+var chatList = document.getElementById('chat-list');
+
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+socket.on('new_chat', function(data) {
+  chatList.innerHTML = '<li class="list-group-item" id="'+data.new_val.id+'">'+data.new_val.name+' - '+data.new_val.message+'</li>' + chatList.innerHTML;
+});
+socket.on('delete_chat', function(data) {
+    chat = document.getElementById(data.old_val.id);
+    chatList.removeChild(chat);
+});
+socket.on('update_chat', function(data) {
+    chat = document.getElementById(data.old_val.id);
+    chat.innerHTML = data.new_val.name+' - '+data.new_val.message;
+});
+socket.on('refresh_field', function(game) {
+    console.log('Got socket info');
+    refreshField(game['new_val']);
+});
+
+function reset() {
+    console.log('Restting...');
+    axios.post('/reset/', {}).then(function (response) { console.log('Reset'); });
+}
+
+function refreshField(game) {
+    var field = game['field'];
+    var playerToMove = document.getElementById('player-to-move');
+    playerToMove.removeAttribute('class'); // TODO: Dit is niet netjes
+    playerToMove.classList.add('player-' + game['player_to_move']);
+    playerToMove.innerHTML = 'Player ' + game['player_to_move'];
+
+    startTime = new Date();
+    for (var i = 0; i < field.length; i++) {
+        for (var j = 0; j < field[i].length; j++) {
+            var tile = document.getElementById('block-'+ (i*field[i].length + j));
+            for (var k = 1; k <= 4; k++) {   // FIXME: Hardcoded 4 players
+                tile.classList.remove('entry-'+k);
+            }
+            tile.classList.add('entry-'+field[i][j]);
+
+            if (feasibleField(field, j, i)) {
+                if (!tile.hasListener) {
+                    tile.classList.add('entry-feasible');
+                    tile.addEventListener("click", handleMove);
+                }
+            }
+            else if (tile.classList.contains('entry-feasible')) {
+                tile.classList.remove('entry-feasible');
+                tile.removeEventListener('click', handleMove);
+            }
+        }
+    }
+    console.log('Time to refresh field: ' + (new Date() - startTime));
+}
+
+function handleMove(event) {
+    requestTime = new Date();
+    axios.post('/move/', {
+        tile: event['target']['id'].split('-').pop()
+    }).then(function (response) {
+        event.target.removeEventListener(event.type, arguments.callee);
+        event.target.classList.remove('entry-feasible');
+        console.log('Performed handler');
+    }).catch(function (error) {
+        console.log('An error occurred. Error was: ' + error);
+    })
+};
+
+function feasibleField(field, x, y) {
+    if (field[y][x]) return false;
+
+    // The field on the left is filled; check that the right side is empty
+    if (x > 0 && field[y][x-1]) {
+        var possible = true;
+        for(var i = x+1; i < field[y].length; i++) {
+            if (field[y][i]) {
+                possible = false;
+                break;
+            }
+        }
+        if (possible) return true;
+    }
+    // The field on the right is filled; check that the left side is empty
+    if (x < field[y].length-1 && field[y][x+1]) {
+        var possible = true;
+        for(var i = 0; i < x; i++) {
+            if (field[y][i]) {
+                possible = false;
+                break;
+            }
+        }
+        if (possible) return true;
+    }
+    // The field on the top is filled; check that the bottom side is empty
+    if (y > 0 && field[y-1][x]) {
+        var possible = true;
+        for(var i = y+1; i < field.length; i++) {
+            if (field[i][x]) {
+                possible = false;
+                break;
+            }
+        }
+        if (possible) return true;
+    }
+
+    // The field on the bottom is filled; check that the top side is empty
+    if (y < field.length-1 && field[y+1][x]) {
+        var possible = true;
+        for(var i = 0; i < y; i++) {
+            if (field[i][x]) {
+                possible = false;
+                break;
+            }
+        }
+        if (possible) return true;
+    }
+
+    return false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+   var request = axios.get('/game/');
+   request.then(function (response) {
+       refreshField(response['data']);
+   });
+}, false);
+
+chatForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  var request = axios.post('/chats/', {
+    name: nameInput.value,
+    message: messageInput.value
+  });
+  request.then(function(data) {
+    console.log(data);
+  })
+  messageInput.value = "";
+});
+
+</script>
+
+{% endblock %}
